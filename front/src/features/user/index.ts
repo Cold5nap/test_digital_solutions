@@ -1,6 +1,6 @@
 import userApi from './api/userAPI'
-import UserTable from './ui/UserTable'
+import UserList from './ui/UserList'
 
 export * from './api/userAPI'
-export { UserTable,userApi }
+export { userApi,UserList }
 export * from './model/userModel'

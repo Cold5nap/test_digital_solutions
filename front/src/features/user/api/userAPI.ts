@@ -42,9 +42,9 @@ export const userApi = createApi({
 				method: "POST",
 				body: indexes,
 			}),
-			// invalidatesTags: ["User"],
+			// invalidatesTags: (a,b,c)=>["User"],
 		}),
-		getSelected: builder.query<number[], void>({
+		getSelected: builder.query<string[], void>({
 			query: () => "/selected",
 			providesTags: ["Selected"],
 		}),

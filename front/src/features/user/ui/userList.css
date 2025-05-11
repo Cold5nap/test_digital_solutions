@@ -1,0 +1,11 @@
+.user-list {
+	height: 70vh;
+	overflow: hidden;
+	width: 300px;
+}
+
+.user-handle {
+	cursor: grab;
+	padding: 10px;
+	border-bottom: 2px solid gainsboro;
+}
