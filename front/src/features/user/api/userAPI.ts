@@ -16,7 +16,6 @@ interface UserPagination {
 
 export const userApi = createApi({
 	reducerPath: "userApi",
-	// baseQuery: fetchBaseQuery({ baseUrl: import.meta.env.BASE_URL+"/api/users" }),
 	baseQuery: fetchBaseQuery({ baseUrl: "/api/users" }),
 	tagTypes: ["User", "Selected"],
 	endpoints: (builder) => ({
@@ -42,7 +41,6 @@ export const userApi = createApi({
 				method: "POST",
 				body: indexes,
 			}),
-			// invalidatesTags: (a,b,c)=>["User"],
 		}),
 		getSelected: builder.query<string[], void>({
 			query: () => "/selected",

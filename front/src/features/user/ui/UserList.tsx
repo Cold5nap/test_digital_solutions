@@ -57,9 +57,9 @@ const UserList: FunctionComponent<UserListProps> = ({
 	const PS = useSensor(PointerSensor);
 	const TS = useSensor(TouchSensor, {
 		activationConstraint: {
-			distance: 10, // Увеличьте расстояние активации
-			delay: 100, // Добавьте небольшую задержку
-			tolerance: 5, // Добавьте допуск
+			distance: 10,
+			delay: 100,
+			tolerance: 5,
 		},
 	});
 	const s = IS_MOBILE ? [TS] : [KS, PS];
@@ -164,7 +164,6 @@ const UserList: FunctionComponent<UserListProps> = ({
 						itemCount={listUsers.length}
 						itemSize={ITEM_HEIGHT}
 						width="100%"
-						// style={{ overflowX: "hidden" }}
 						onScroll={handleScroll}
 					>
 						{Row}
