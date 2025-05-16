@@ -40,7 +40,7 @@ interface UserListProps {
 }
 
 const IS_MOBILE = window.matchMedia("(max-width: 760px)").matches;
-const VISIBLE_LIST_HEIGHT = window.innerHeight - 200;
+const VISIBLE_LIST_HEIGHT = window.innerHeight - 220;
 const ITEM_HEIGHT = 60;
 const UserList: FunctionComponent<UserListProps> = ({
 	users,
