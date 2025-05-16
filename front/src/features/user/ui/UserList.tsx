@@ -108,7 +108,7 @@ const UserList: FunctionComponent<UserListProps> = ({
 					checked={checked}
 					key={user.id}
 					user={user}
-					style={{...style,width:270}}
+					style={{...style,width:260}}
 				/>
 			);
 		},
