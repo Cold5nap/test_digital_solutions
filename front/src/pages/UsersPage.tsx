@@ -6,11 +6,12 @@ import {
 	useUpdateOrderMutation,
 } from "@features/user";
 import { Input, Space } from "antd";
-import { SearchProps } from "antd/es/input";
-import React, { useState } from "react";
+import { InputRef, SearchProps } from "antd/es/input";
+import React, { useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
 const UserListPage = () => {
+	const inputRef = useRef<InputRef>(null);
 	const dispatch = useDispatch();
 
 	const [userState, setUserState] = useState({
@@ -19,7 +20,7 @@ const UserListPage = () => {
 		pageSize: 20,
 		order: OrderTypes.asc,
 	});
-	const { data, isLoading,isFetching } = useSearchUsersQuery(userState);
+	const { data, isLoading, isFetching } = useSearchUsersQuery(userState);
 	const [swapUsers, { isLoading: swapLoading }] = useUpdateOrderMutation();
 
 	const nextPage = () => {
@@ -27,6 +28,9 @@ const UserListPage = () => {
 	};
 
 	const searchHandler: SearchProps["onSearch"] = (search) => {
+		if (inputRef.current) {
+			inputRef.current.blur();
+		  }
 		dispatch(userApi.util.resetApiState());
 		setUserState((state) => {
 			return {
@@ -42,7 +46,6 @@ const UserListPage = () => {
 		swapUsers([from, to]);
 		dispatch(userApi.util.resetApiState());
 		setUserState((state) => {
-
 			return {
 				...state,
 				page: 1,
@@ -53,21 +56,23 @@ const UserListPage = () => {
 
 	return (
 		<Space direction="vertical">
-			<Space>
+			<Space direction="vertical">
+				<div>Всего:{data?.total}</div>
 				<Input.Search
+					ref={inputRef}
+					size="large"
 					loading={isLoading}
 					allowClear
 					onSearch={searchHandler}
-					style={{ width: 200 }}
+					style={{ width: 300 }}
 				/>
-				Всего:{data?.total}
 			</Space>
 			<UserList
 				search={userState.search}
 				users={data?.users}
 				onDrop={onDrop}
-				onBottom={nextPage}
-				loading={isFetching||isLoading || swapLoading}
+				onLoad={nextPage}
+				loading={isFetching || isLoading || swapLoading}
 			/>
 		</Space>
 	);

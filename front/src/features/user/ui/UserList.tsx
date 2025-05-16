@@ -1,93 +1,178 @@
-import React, { FunctionComponent, useEffect, useRef, useState } from "react";
-import VirtualList from "react-virtual-drag-list";
+import React, {
+	FunctionComponent,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { User } from "../model/userModel";
-import { Checkbox, Space, Spin } from "antd";
+import { Space, Spin } from "antd";
+import { FixedSizeList, ListOnScrollProps, FixedSizeList as VirtualList } from "react-window";
 import "./userList.css";
 import {
-	useGetSelectedQuery,
-	useSelectMutation,
-	useUnselectMutation,
-} from "../api/userAPI";
+	DndContext,
+	DragEndEvent,
+	DragOverlay,
+	DragStartEvent,
+	KeyboardSensor,
+	PointerSensor,
+	TouchSensor,
+	closestCenter,
+	useSensor,
+	useSensors,
+} from "@dnd-kit/core";
+import {
+	arrayMove,
+	SortableContext,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import UserListItem from "./UserListItem";
+import { useGetSelectedQuery } from "../api/userAPI";
 
 interface UserListProps {
 	onDrop: (from: number, to: number) => void;
-	onBottom: () => void;
+	onLoad: () => void;
 	users?: User[];
 	loading?: boolean;
 	search: string;
-}
-interface VirtualDragListRef {
-	scrollToTop: () => void;
-	// other methods you want to expose
-}
-interface LibListProps {
-	list: User[];
-	oldList: User[];
-	newIndex: number;
-	oldIndex: number;
+	hasMore?: boolean;
 }
 
+const IS_MOBILE = window.matchMedia("(max-width: 760px)").matches;
+const VISIBLE_LIST_HEIGHT = window.innerHeight - 200;
+const ITEM_HEIGHT = 60;
 const UserList: FunctionComponent<UserListProps> = ({
 	users,
 	onDrop,
-	onBottom,
-	loading,
+	onLoad,
 	search,
+	loading,
 }) => {
-	const [listUsers, setListUsers] = useState<User[] | undefined>();
+	const [activeId, setActiveId] = useState<string | null>(null);
+	const listRef = useRef<FixedSizeList>(null);
+	const [needLoad, setNeedLoad] = useState(true);
 	const { data: selectedUsersIds } = useGetSelectedQuery();
-	const [select] = useSelectMutation();
-	const [unselect] = useUnselectMutation();
-	const virtualRef = useRef(null);
+	const KS = useSensor(KeyboardSensor);
+	const PS = useSensor(PointerSensor);
+	const TS = useSensor(TouchSensor, {
+		activationConstraint: {
+			distance: 10, // Увеличьте расстояние активации
+			delay: 100, // Добавьте небольшую задержку
+			tolerance: 5, // Добавьте допуск
+		},
+	});
+	const s = IS_MOBILE ? [TS] : [KS, PS];
+	const sensors = useSensors(...s);
+
+	const [listUsers, setListUsers] = useState<User[]>([]);
+
 	useEffect(() => {
-		if (virtualRef) {
-			const c = virtualRef.current as unknown as VirtualDragListRef;
-			c.scrollToTop();
+		if (listRef.current) {
+			listRef.current.scrollToItem(0, "start");
 		}
-	}, [virtualRef, search]);
+	}, [search]);
+
 	useEffect(() => {
 		if (users) {
 			setListUsers([...users]);
+			setNeedLoad(true);
 		}
 	}, [users]);
 
-	// const dropHandler = (e: LibListProps) => {
-	const dropHandler = ({ list, newIndex, oldIndex, oldList }: LibListProps) => {
-		onDrop(oldList[oldIndex].position, oldList[newIndex].position);
-		setListUsers(list);
+	const dropHandler = useCallback(
+		({ active, over }: DragEndEvent) => {
+			if (over && active.id !== over.id) {
+				let startIndex;
+				let endIndex;
+				setListUsers((items) => {
+					startIndex = items.findIndex((item) => item.id === active.id);
+					endIndex = items.findIndex((item) => item.id === over.id);
+
+					return arrayMove(items, startIndex, endIndex);
+				});
+				if (startIndex != undefined && endIndex != undefined)
+					onDrop(listUsers[startIndex].position, listUsers[endIndex].position);
+				setActiveId(null);
+			}
+		},
+		[onDrop, listUsers]
+	);
+
+	const Row = useCallback(
+		({ index, style }: { index: number; style: React.CSSProperties }) => {
+			const user = listUsers[index];
+			const checked = !!selectedUsersIds?.includes(user.id + "");
+			return (
+				<UserListItem
+					checked={checked}
+					key={user.id}
+					user={user}
+					style={{...style,width:270}}
+				/>
+			);
+		},
+		[listUsers, selectedUsersIds]
+	);
+	const handleScroll = useCallback(
+		({ scrollOffset, scrollUpdateWasRequested }: ListOnScrollProps) => {
+			const innerListHeight = ITEM_HEIGHT * (listUsers.length || 20);
+			const isNearBottom =
+				innerListHeight - scrollOffset - VISIBLE_LIST_HEIGHT <= 300;
+			if (isNearBottom && !scrollUpdateWasRequested && needLoad) {
+				setNeedLoad(false);
+				onLoad();
+			}
+		},
+		[listUsers.length, needLoad, onLoad]
+	);
+
+	const handleDragStart = (event:DragStartEvent) => {
+		setActiveId(event.active.id.toString());
 	};
-	const selectHandler = (checked: boolean, id: number) => {
-		if (checked) {
-			select(id);
-		} else {
-			unselect(id);
-		}
-	};
-	return (
-		<Space direction="vertical">
-			<VirtualList
-				ref={virtualRef}
-				className="virtual-list user-list"
-				dataKey="id"
-				dataSource={listUsers || []}
-				handle=".handle"
-				onDrop={dropHandler}
-				onBottom={onBottom}
-			>
-				{(record) => (
-					<div className="handle user-handle">
-						<Space>
-							<Checkbox
-								defaultChecked={
-									selectedUsersIds && selectedUsersIds.includes(record.id + "")
-								}
-								onChange={(e) => selectHandler(e.target.checked, record.id)}
-							/>
-							<div>{record.name}</div>
-						</Space>
+	const Overlay = useMemo(
+		() => (
+			<DragOverlay>
+				{activeId && selectedUsersIds ? (
+					<div style={{ background: "gainsboro" }}>
+						<UserListItem
+							user={listUsers.find((u) => u.id.toString() == activeId)!}
+							style={{ width: 280, height: 60, background: "gainsboro" }}
+							checked={!!selectedUsersIds?.includes(activeId + "")}
+						/>
 					</div>
-				)}
-			</VirtualList>
+				) : null}
+			</DragOverlay>
+		),
+		[activeId, listUsers, selectedUsersIds]
+	);
+	return (
+		<Space direction="vertical" style={{ minWidth: "300px" }}>
+			<DndContext
+				sensors={sensors}
+				collisionDetection={closestCenter}
+				onDragStart={handleDragStart}
+				onDragEnd={dropHandler}
+			>
+				<SortableContext
+					items={listUsers}
+					strategy={verticalListSortingStrategy}
+				>
+					<VirtualList
+						ref={listRef}
+						height={VISIBLE_LIST_HEIGHT}
+						itemCount={listUsers.length}
+						itemSize={ITEM_HEIGHT}
+						width="100%"
+						// style={{ overflowX: "hidden" }}
+						onScroll={handleScroll}
+					>
+						{Row}
+					</VirtualList>
+				</SortableContext>
+				{Overlay}
+			</DndContext>
+
 			{loading && (
 				<Space>
 					<Spin /> Загрузка...

@@ -9,3 +9,16 @@
 	padding: 10px;
 	border-bottom: 2px solid gainsboro;
 }
+/* Добавьте в userList.css */
+.user-list-item {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+	border-bottom: 2px solid gainsboro;
+	padding: 4px 10px;
+}
+
+.user-list-item .drag-handle {
+    cursor: grab;
+    touch-action: none; /* Только для области перетаскивания */
+}

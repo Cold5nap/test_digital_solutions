@@ -53,14 +53,14 @@ export const userApi = createApi({
 				url: "/select/" + id,
 				method: "POST",
 			}),
-			// invalidatesTags: ["Selected"],
+			invalidatesTags: ["Selected"],
 		}),
 		unselect: builder.mutation({
 			query: (id: number) => ({
 				url: "/unselect/" + id,
 				method: "POST",
 			}),
-			// invalidatesTags: ["Selected"],
+			invalidatesTags: ["Selected"],
 		}),
 	}),
 });

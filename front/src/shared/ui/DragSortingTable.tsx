@@ -72,7 +72,6 @@ export function DragSortingTable<T extends BaseRecord>({
 
 	useEffect(() => {
 		setDataSource(data);
-		// console.log(data);
 	}, [data]);
 
 	const sensors = useSensors(
