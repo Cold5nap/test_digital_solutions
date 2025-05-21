@@ -1,7 +1,7 @@
 import { FunctionComponent, useState } from "react";
 import { User } from "../model/userModel";
 import { useSelectMutation, useUnselectMutation } from "../api/userAPI";
-import { Checkbox, Space } from "antd";
+import { Checkbox, Flex, Space } from "antd";
 import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -52,7 +52,7 @@ const UserListItem: FunctionComponent<UserListItemProps> = ({
 			ref={setNodeRef}
 			style={combinedStyle}
 			{...attributes}
-			{...listeners}
+
 		>
 			<Checkbox
 				style={{
@@ -63,7 +63,7 @@ const UserListItem: FunctionComponent<UserListItemProps> = ({
 				checked={selected}
 				onChange={(e) => selectHandler(e.target.checked, user.id)}
 			/>
-			<div>{user.name}</div>
+			<Flex {...listeners} style={{height:65,width:200}} vertical justify="center"> <div>{user.name}</div> </Flex>
 		</Space>
 	);
 };

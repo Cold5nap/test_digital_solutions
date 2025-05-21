@@ -42,8 +42,8 @@ const UserListPage = () => {
 		});
 	};
 
-	const onDrop = (from: number, to: number) => {
-		swapUsers([from, to]);
+	const onDrop = async (from: number, to: number) => {
+		await swapUsers([from, to]).unwrap();
 		dispatch(userApi.util.resetApiState());
 		setUserState((state) => {
 			return {
